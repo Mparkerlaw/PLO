@@ -81,9 +81,11 @@ def check_ccap(county, case_number):
             data = json.loads(resp.read().decode("utf-8"))
             return {"status": "ok", "data": data}
     except urllib.error.HTTPError as e:
-        if e.code == 403:
-            return {"status": "error", "message": "CCAP blocked the request (CAPTCHA required). Try again later or check wcca.wicourts.gov manually."}
-        return {"status": "error", "message": f"HTTP {e.code}: {e.reason}"}
+        county_no = _county_to_number(county)
+        manual_url = f"https://wcca.wicourts.gov/caseDetail.html?caseNo={case_number}&countyNo={county_no}"
+        if e.code in (403, 404):
+            return {"status": "error", "message": f"CCAP blocked automated access. View manually:\n      {manual_url}"}
+        return {"status": "error", "message": f"HTTP {e.code}. View manually:\n      {manual_url}"}
     except urllib.error.URLError as e:
         return {"status": "error", "message": f"Connection failed: {e.reason}"}
     except Exception as e:
