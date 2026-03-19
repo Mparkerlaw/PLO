@@ -235,7 +235,7 @@ def handle_list_cases():
     print(f"\n📂 Monitored Cases ({len(cases)}):\n")
     for c in cases:
         checked = c.get("last_checked", "never")
-        if checked != "never":
+        if checked and checked != "never":
             checked = checked[:16].replace("T", " ")
         status = c.get("last_status", "not checked yet")
         print(f"  {c['case_number']} ({c['county']} Co.) — {c['case_name']}")
