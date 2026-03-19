@@ -1,0 +1,5 @@
+# PLO Agent dependencies
+# Core agent has no required dependencies (uses stdlib only)
+
+# Optional: AI chat (uncomment to enable Claude-powered conversations)
+anthropic>=0.40.0
