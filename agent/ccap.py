@@ -5,7 +5,17 @@ import urllib.request
 import urllib.error
 from datetime import datetime
 
-from .config import CASES_FILE, CCAP_SEARCH_URL, load_json, save_json
+from .config import CASES_FILE, CCAP_DETAIL_URL, load_json, save_json
+
+# Browser-like headers to avoid immediate 403 blocks
+_HEADERS = {
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Origin": "https://wcca.wicourts.gov",
+    "Referer": "https://wcca.wicourts.gov/caseDetail.html",
+}
 
 
 def add_case(case_name, county, case_number, case_type="criminal"):
@@ -53,8 +63,8 @@ def list_cases():
 def check_ccap(county, case_number):
     """Query CCAP for a case and return the response.
 
-    Returns a dict with case details or an error message.
-    Note: CCAP may change their API; this uses their public JSON endpoint.
+    Uses the caseDetail JSON endpoint with browser-like headers.
+    Note: CCAP may require CAPTCHA after repeated automated requests.
     """
     payload = json.dumps({
         "countyNo": _county_to_number(county),
@@ -62,15 +72,17 @@ def check_ccap(county, case_number):
     }).encode("utf-8")
 
     req = urllib.request.Request(
-        CCAP_SEARCH_URL,
+        CCAP_DETAIL_URL,
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers=_HEADERS,
     )
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return {"status": "ok", "data": data}
     except urllib.error.HTTPError as e:
+        if e.code == 403:
+            return {"status": "error", "message": "CCAP blocked the request (CAPTCHA required). Try again later or check wcca.wicourts.gov manually."}
         return {"status": "error", "message": f"HTTP {e.code}: {e.reason}"}
     except urllib.error.URLError as e:
         return {"status": "error", "message": f"Connection failed: {e.reason}"}
@@ -113,7 +125,10 @@ def _summarize_case(data):
         status = data.get("status", "")
         next_date = data.get("nextCourtDate", "")
         charges = data.get("chargeCount", "")
+        caption = data.get("caption", "")
         parts = []
+        if caption:
+            parts.append(caption)
         if status:
             parts.append(f"Status: {status}")
         if next_date:
@@ -124,7 +139,7 @@ def _summarize_case(data):
     return str(data)[:200]
 
 
-# Wisconsin county name → CCAP county number mapping (partial — extend as needed)
+# Wisconsin county name → CCAP county number mapping (all 72 counties)
 _COUNTY_MAP = {
     "adams": 1, "ashland": 2, "barron": 3, "bayfield": 4, "brown": 5,
     "buffalo": 6, "burnett": 7, "calumet": 8, "chippewa": 9, "clark": 10,

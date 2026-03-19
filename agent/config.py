@@ -10,7 +10,8 @@ CASES_FILE = DATA_DIR / "cases.json"
 
 # CCAP base URL (Wisconsin Circuit Court Access)
 CCAP_BASE_URL = "https://wcca.wicourts.gov"
-CCAP_SEARCH_URL = f"{CCAP_BASE_URL}/jsonPost/courtCaseSearch"
+CCAP_SEARCH_URL = f"{CCAP_BASE_URL}/jsonPost/advancedCaseSearch"
+CCAP_DETAIL_URL = f"{CCAP_BASE_URL}/jsonPost/caseDetail"
 
 # Practice areas this agent supports
 PRACTICE_AREAS = ["criminal_defense", "family_law"]
