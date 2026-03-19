@@ -11,3 +11,6 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local launcher with API key — never commit
+start.sh
